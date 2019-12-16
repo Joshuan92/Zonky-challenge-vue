@@ -1,9 +1,10 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
+    <NavBar />
+    <FlightsOverview
+      v-if="flightsData.length"
+      :flights="flightsData"
+     />
     <router-view />
   </div>
 </template>
@@ -30,3 +31,45 @@
   }
 }
 </style>
+
+<script>
+import NavBar from "./components/NavBar.vue";
+import FlightsOverview from "./components/FlightOverview.vue";
+
+export default {
+  name: "app",
+  components: {
+    NavBar,
+    FlightsOverview
+  },
+  data() {
+    return {
+      flightsData: {}
+    };
+  },
+  // computed: {
+  //   averagePrice() {
+
+  //   }
+  // },
+  methods: {
+    
+  },
+  mounted() {
+    fetch(
+      "https://api.skypicker.com/flights?fly_from=PRG&fly_to=ZRH&partner=picky",
+      {
+        method: "get",
+        headers: { "Content-Type": "application/json" }
+      }
+    )
+      .then(response => {
+        return response.json();
+      })
+
+      .then(jsonData => {
+        this.flightsData = jsonData.data;
+      });
+  }
+};
+</script>
