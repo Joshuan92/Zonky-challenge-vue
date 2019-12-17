@@ -1,10 +1,7 @@
 <template>
   <div id="app">
     <NavBar />
-    <FlightsOverview
-      v-if="flightsData.length"
-      :flights="flightsData"
-     />
+    <FlightsOverview v-if="fetchedFlightsData.length" :flights="flightsData" />
     <router-view />
   </div>
 </template>
@@ -44,7 +41,8 @@ export default {
   },
   data() {
     return {
-      flightsData: {}
+      fetchedFlightsData: {},
+      flightsData: []
     };
   },
   // computed: {
@@ -52,9 +50,7 @@ export default {
 
   //   }
   // },
-  methods: {
-    
-  },
+  methods: {},
   mounted() {
     fetch(
       "https://api.skypicker.com/flights?fly_from=PRG&fly_to=ZRH&partner=picky",
@@ -68,7 +64,28 @@ export default {
       })
 
       .then(jsonData => {
-        this.flightsData = jsonData.data;
+        this.fetchedFlightsData = jsonData.data;
+      })
+      .then(() => {
+        this.fetchedFlightsData.forEach(flight => {
+          this.flightsData.push({
+            from: flight.cityFrom + ", " + flight.countryFrom.name,
+            "time of departure": new Date(
+              flight.dTime * 1000
+            ).toLocaleTimeString(),
+            "date of departure": new Date(
+              flight.dTime * 1000
+            ).toLocaleDateString(),
+            to: flight.cityTo + ", " + flight.countryTo.name,
+            "time of arrival": new Date(
+              flight.aTime * 1000
+            ).toLocaleTimeString(),
+            "date of arrival": new Date(
+              flight.aTime * 1000
+            ).toLocaleDateString(),
+            price: flight.price + " EUR"
+          });
+        });
       });
   }
 };
