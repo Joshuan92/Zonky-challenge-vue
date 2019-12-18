@@ -1,7 +1,17 @@
 <template>
   <div id="app">
     <NavBar />
-    <FlightsOverview v-if="fetchedFlightsData.length" :flights="flightsData" />
+    <FlightsOverview
+      v-if="fetchedFlightsData.length"
+      :fetchedFlightsData="fetchedFlightsData"
+      :flights="flightsData"
+      :calculatedData="calculatedData"
+    />
+    <div v-else class="text-center m-3">
+      <b-spinner variant="primary" label="Text Centered"></b-spinner>
+      <br />
+      Loading data. You will get your cheapest flights in a second.
+    </div>
     <router-view />
   </div>
 </template>
@@ -41,24 +51,23 @@ export default {
   },
   data() {
     return {
+      apiURL:
+        "https://api.skypicker.com/flights?fly_from=PRG&fly_to=ZRH&partner=picky",
       fetchedFlightsData: {},
-      flightsData: []
+      flightsData: [],
+      calculatedData: {
+        totalPrice: null,
+        averagePrice: null,
+        numberOfFlights: null
+      }
     };
   },
-  // computed: {
-  //   averagePrice() {
-
-  //   }
-  // },
   methods: {},
   mounted() {
-    fetch(
-      "https://api.skypicker.com/flights?fly_from=PRG&fly_to=ZRH&partner=picky",
-      {
-        method: "get",
-        headers: { "Content-Type": "application/json" }
-      }
-    )
+    fetch(this.apiURL, {
+      method: "get",
+      headers: { "Content-Type": "application/json" }
+    })
       .then(response => {
         return response.json();
       })
@@ -68,24 +77,28 @@ export default {
       })
       .then(() => {
         this.fetchedFlightsData.forEach(flight => {
+          this.calculatedData.totalPrice += flight.price;
           this.flightsData.push({
             from: flight.cityFrom + ", " + flight.countryFrom.name,
-            "time of departure": new Date(
-              flight.dTime * 1000
-            ).toLocaleTimeString(),
-            "date of departure": new Date(
-              flight.dTime * 1000
-            ).toLocaleDateString(),
+            "date and time of departure":
+              new Date(flight.dTime * 1000).toLocaleTimeString() +
+              ", " +
+              new Date(flight.dTime * 1000).toLocaleDateString(),
             to: flight.cityTo + ", " + flight.countryTo.name,
-            "time of arrival": new Date(
-              flight.aTime * 1000
-            ).toLocaleTimeString(),
-            "date of arrival": new Date(
-              flight.aTime * 1000
-            ).toLocaleDateString(),
+            "time of arrival":
+              new Date(flight.aTime * 1000).toLocaleTimeString() +
+              ", " +
+              new Date(flight.aTime * 1000).toLocaleDateString(),
+            "number of flights": flight.pnr_count,
+            "flight duration": flight.fly_duration,
             price: flight.price + " EUR"
           });
         });
+      })
+      .then(() => {
+        this.calculatedData.averagePrice =
+          this.calculatedData.totalPrice / this.flightsData.length;
+        this.calculatedData.numberOfFlights = this.flightsData.length;
       });
   }
 };
